@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATT Davomat Portal 2026/2027</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at top left, #0f172a, #020617);
+      --card-bg: rgba(15, 23, 42, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --warning: #eab308;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg-gradient); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    .glass {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    header {
+      padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--card-border); background: rgba(15, 23, 42, 0.85); position: sticky; top: 0; z-index: 50;
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #000; font-size: 1.1rem;
+    }
+
+    .btn {
+      padding: 0.65rem 1.2rem; border-radius: 12px; border: none; cursor: pointer;
+      font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #0284c7); color: #000; box-shadow: 0 4px 15px var(--accent-glow); }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
+
+    #authSection { max-width: 420px; margin: 5rem auto; padding: 2.5rem; width: 90%; text-align: center; }
+    .form-group { margin-bottom: 1.25rem; text-align: left; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid var(--card-border);
+      background: rgba(2, 6, 23, 0.6); color: #fff; font-size: 0.95rem; outline: none;
+    }
+
+    main { padding: 2rem; max-width: 1280px; margin: 0 auto; width: 100%; flex: 1; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
+    th { padding: 1rem; text-align: left; color: var(--accent); font-size: 0.85rem; border-bottom: 1px solid var(--card-border); }
+    td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--card-border); font-size: 0.9rem; }
+    tbody tr:hover { background: rgba(255, 255, 255, 0.03); cursor: pointer; }
+
+    .badge { padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+    .badge-present { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-absent { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-excused { background: rgba(234, 179, 8, 0.15); color: var(--warning); border: 1px solid rgba(234, 179, 8, 0.3); }
+
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      display: none; justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal-content { max-width: 650px; width: 90%; padding: 2rem; max-height: 85vh; overflow-y: auto; }
+  </style>
+
+  <!-- FIREBASE SDK v11 (To'g'rilangan Config Bilan) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+
+    // Siz taqdim etgan to'g'ri Firebase konfiguratsiyasi
+    const firebaseConfig = {
+      apiKey: "AIzaSyAkvhYl3c-O0kpOQgQ7Y4JC766O72BNS_0",
+      authDomain: "shohcore12.firebaseapp.com",
+      projectId: "shohcore12",
+      storageBucket: "shohcore12.firebasestorage.app",
+      messagingSenderId: "352855674609",
+      appId: "1:352855674609:web:e42080ca30b731e6d8e350",
+      measurementId: "G-CY4YMKXW04"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.fStore = { collection, doc, setDoc, getDoc, getDocs, query, where };
+  </script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="glass">
+    <div class="brand">
+      <div class="brand-logo">ATT</div>
+      <div>
+        <h3 style="font-size: 1rem; font-weight: 700;">ATT Davomat Portal</h3>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">2026 / 2027 O'quv Yili</p>
+      </div>
+    </div>
+    <div id="userInfo" style="display: none; align-items: center; gap: 1rem;">
+      <span id="userDisplayName" style="font-size: 0.9rem; font-weight: 600;"></span>
+      <button class="btn btn-danger" onclick="logout()">Chiqish</button>
+    </div>
+  </header>
+
+  <!-- AUTH SECTION (LOGIN) -->
+  <div id="authSection" class="glass">
+    <h2 style="margin-bottom: 0.5rem;">Tizimga Kirish</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Axborot Tizimlari va Texnologiyalari Yo'nalishi</p>
+    
+    <div class="form-group">
+      <label>Login</label>
+      <input type="text" id="loginInput" placeholder="Masalan: student01 yoki domla1">
+    </div>
+    <div class="form-group">
+      <label>Parol</label>
+      <input type="password" id="passwordInput" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem;" onclick="login()">Tizimga Kirish</button>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <main id="dashboardSection" style="display: none;">
+    <!-- DOMLALAR PANELI -->
+    <div id="teacherView" style="display: none;">
+      <div class="glass" style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <h2 id="teacherSubjectTitle">O'qituvchi Paneli</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Talabalarning darsdagi ishtirokini belgilang</p>
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; color: var(--text-muted); margin-right: 0.5rem;">Sana:</label>
+            <input type="date" id="attDate" onchange="loadStudentListForTeacher()" style="padding: 0.5rem; border-radius: 8px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid var(--card-border);">
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Talaba F.I.Sh</th>
+                <th>Status</th>
+                <th>Kelmaganlik Sababi (Izoh)</th>
+                <th>Davomat Belgilash</th>
+              </tr>
+            </thead>
+            <tbody id="teacherTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTLAR PANELI -->
+    <div id="studentView" style="display: none;">
+      <div class="grid">
+        <!-- SABAB YOZISH -->
+        <div class="glass" style="padding: 1.5rem;">
+          <h3>Darsga Kelolmaslik Sababi</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Sababingizni yozib saqlasangiz, barcha domlalarga ko'rinadi.</p>
+          
+          <div class="form-group">
+            <label>Sana</label>
+            <input type="date" id="excuseDate">
+          </div>
+          <div class="form-group">
+            <label>Izoh / Sabab</label>
+            <textarea id="excuseText" rows="4" placeholder="Masalan: Sog'lig'im yomonlashgani sababli darsga qatnasha olmayman..."></textarea>
+          </div>
+          <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="saveExcuse()">Sababni Saqlash</button>
+        </div>
+
+        <!-- KURSDOSHLAR RO'YXATI -->
+        <div class="glass" style="padding: 1.5rem;">
+          <h3>Kursdoshlar Davomati</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Ustiga bossangiz, o'quv yili boshidan beri bo'lgan tarixi chiqadi.</p>
+          
+          <div style="max-height: 380px; overflow-y: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>F.I.Sh</th>
+                  <th>Login</th>
+                </tr>
+              </thead>
+              <tbody id="studentsListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: KURSDOSH TARIXI -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content glass">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <h3 id="modalStudentName">Talaba Tarixi</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">2026/2027 O'quv Yili To'liq Davomat Tarixi</p>
+        </div>
+        <button class="btn btn-outline" onclick="closeModal()">✕</button>
+      </div>
+
+      <table style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Sana</th>
+            <th>Fan</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // 5 TA DOMLA LOGIN / PAROLI
+    const TEACHERS = [
+      { id: 'tch_01', login: 'domla1', pass: 'domla_pass_1', name: 'Ahmadov B.', subject: 'Sun\'iy Intellekt', role: 'teacher' },
+      { id: 'tch_02', login: 'domla2', pass: 'domla_pass_2', name: 'Karimov S.', subject: 'Web Dasturlash', role: 'teacher' },
+      { id: 'tch_03', login: 'domla3', pass: 'domla_pass_3', name: 'Tashpulatov M.', subject: 'Ma\'lumotlar Bazasi', role: 'teacher' },
+      { id: 'tch_04', login: 'domla4', pass: 'domla_pass_4', name: 'Aliyeva N.', subject: 'Kiberxavfsizlik', role: 'teacher' },
+      { id: 'tch_05', login: 'domla5', pass: 'domla_pass_5', name: 'Nazarov Q.', subject: 'Algoritmlar', role: 'teacher' }
+    ];
+
+    // STUDENTLAR RO'YXATI (Siz o'zingiz nusxalab ko'paytirishingiz mumkin)
+    const STUDENTS = [
+      { id: 'std_01', login: 'student01', pass: 'pass_std_01', name: 'Aliyev Vali', role: 'student' },
+      { id: 'std_02', login: 'student02', pass: 'pass_std_02', name: 'Karimov Sardor', role: 'student' },
+      { id: 'std_03', login: 'student03', pass: 'pass_std_03', name: 'Eshonqulova Malika', role: 'student' },
+      { id: 'std_04', login: 'student04', pass: 'pass_std_04', name: 'Nazarov Diyor', role: 'student' },
+      { id: 'std_05', login: 'student05', pass: 'pass_std_05', name: 'Rustamov Bobur', role: 'student' },
+    ];
+
+    let currentUser = null;
+
+    document.getElementById('attDate').valueAsDate = new Date();
+    document.getElementById('excuseDate').valueAsDate = new Date();
+
+    function login() {
+      const loginVal = document.getElementById('loginInput').value.trim();
+      const passVal = document.getElementById('passwordInput').value.trim();
+
+      const user = [...TEACHERS, ...STUDENTS].find(u => u.login === loginVal && u.pass === passVal);
+
+      if (user) {
+        currentUser = user;
+        document.getElementById('authSection').style.display = 'none';
+        document.getElementById('dashboardSection').style.display = 'block';
+        document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('userDisplayName').innerText = `${user.name} (${user.role === 'teacher' ? 'O\'qituvchi' : 'Talaba'})`;
+
+        if (user.role === 'teacher') {
+          document.getElementById('teacherView').style.display = 'block';
+          document.getElementById('teacherSubjectTitle').innerText = `Fan: ${user.subject}`;
+          loadStudentListForTeacher();
+        } else {
+          document.getElementById('studentView').style.display = 'block';
+          loadStudentsListForStudent();
+        }
+      } else {
+        alert('Login yoki parol noto\'g\'ri!');
+      }
+    }
+
+    function logout() {
+      location.reload();
+    }
+
+    async function loadStudentListForTeacher() {
+      const date = document.getElementById('attDate').value;
+      const tbody = document.getElementById('teacherTableBody');
+      tbody.innerHTML = '<tr><td colspan="5">Yuklanmoqda...</td></tr>';
+
+      try {
+        const promises = STUDENTS.map(async (std, i) => {
+          let status = 'Belgilanmagan';
+          let excuse = '-';
+
+          try {
+            const docRef = window.fStore.doc(window.db, "attendance", `${date}_${std.id}_${currentUser.id}`);
+            const docSnap = await window.fStore.getDoc(docRef);
+            if (docSnap.exists()) status = docSnap.data().status;
+
+            const excuseRef = window.fStore.doc(window.db, "excuses", `${date}_${std.id}`);
+            const excuseSnap = await window.fStore.getDoc(excuseRef);
+            if (excuseSnap.exists()) excuse = excuseSnap.data().reason;
+          } catch (e) {
+            console.warn("So'rov kelmadi:", e);
+          }
+
+          return `
+            <tr>
+              <td>${i + 1}</td>
+              <td><b>${std.name}</b> <br><small style="color:var(--text-muted);">${std.login}</small></td>
+              <td><span class="badge badge-${status === 'Keldi' ? 'present' : status === 'Kelmadi' ? 'absent' : status === 'Sababli' ? 'excused' : 'outline'}">${status}</span></td>
+              <td><i style="color:var(--text-muted);">${excuse}</i></td>
+              <td>
+                <button class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="setAttendance('${std.id}', 'Keldi')">Keldi</button>
+                <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="setAttendance('${std.id}', 'Kelmadi')">Kelmadi</button>
+                <button class="btn btn-outline" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="setAttendance('${std.id}', 'Sababli')">Sababli</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        const rows = await Promise.all(promises);
+        tbody.innerHTML = rows.join('');
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--danger)">Yuklashda xatolik ro\'y berdi. Firebase Rules sozlamalarini tekshiring!</td></tr>';
+      }
+    }
+
+    async function setAttendance(studentId, status) {
+      const date = document.getElementById('attDate').value;
+      try {
+        await window.fStore.setDoc(window.fStore.doc(window.db, "attendance", `${date}_${studentId}_${currentUser.id}`), {
+          date: date,
+          studentId: studentId,
+          teacherId: currentUser.id,
+          subject: currentUser.subject,
+          status: status
+        });
+        loadStudentListForTeacher();
+      } catch(e) {
+        alert('Firebase yozish xatosi! Rules panelida "allow read, write: if true;" borligini tekshiring.');
+      }
+    }
+
+    async function saveExcuse() {
+      const date = document.getElementById('excuseDate').value;
+      const reason = document.getElementById('excuseText').value.trim();
+
+      if(!reason) return alert('Sababni yozing!');
+
+      try {
+        await window.fStore.setDoc(window.fStore.doc(window.db, "excuses", `${date}_${currentUser.id}`), {
+          date: date,
+          studentId: currentUser.id,
+          reason: reason
+        });
+        alert('Sabab saqlandi!');
+        document.getElementById('excuseText').value = '';
+      } catch(e) {
+        alert('Xatolik yuz berdi!');
+      }
+    }
+
+    function loadStudentsListForStudent() {
+      const tbody = document.getElementById('studentsListBody');
+      tbody.innerHTML = STUDENTS.map(s => `
+        <tr onclick="showStudentHistory('${s.id}', '${s.name}')">
+          <td><b>${s.name}</b></td>
+          <td><code style="color:var(--accent);">${s.login}</code></td>
+        </tr>
+      `).join('');
+    }
+
+    async function showStudentHistory(stdId, stdName) {
+      document.getElementById('modalStudentName').innerText = `${stdName}`;
+      document.getElementById('historyModal').style.display = 'flex';
+      
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = '<tr><td colspan="3">Tarix yuklanmoqda...</td></tr>';
+
+      try {
+        const q = window.fStore.query(
+          window.fStore.collection(window.db, "attendance"),
+          window.fStore.where("studentId", "==", stdId)
+        );
+        const querySnapshot = await window.fStore.getDocs(q);
+        
+        if(querySnapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Ma\'lumot topilmadi.</td></tr>';
+          return;
+        }
+
+        let html = '';
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          html += `
+            <tr>
+              <td>${data.date}</td>
+              <td><b>${data.subject}</b></td>
+              <td><span class="badge badge-${data.status === 'Keldi' ? 'present' : data.status === 'Kelmadi' ? 'absent' : 'excused'}">${data.status}</span></td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = html;
+      } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="3">Xatolik yuz berdi.</td></tr>';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('historyModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
