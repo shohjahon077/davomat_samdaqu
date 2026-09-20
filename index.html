@@ -82,12 +82,11 @@
     .modal-content { max-width: 650px; width: 90%; padding: 2rem; max-height: 85vh; overflow-y: auto; }
   </style>
 
-  <!-- FIREBASE SDK v11 (To'g'rilangan Config Bilan) -->
+  <!-- FIREBASE MODULE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
-    // Siz taqdim etgan to'g'ri Firebase konfiguratsiyasi
     const firebaseConfig = {
       apiKey: "AIzaSyAkvhYl3c-O0kpOQgQ7Y4JC766O72BNS_0",
       authDomain: "shohcore12.firebaseapp.com",
@@ -101,13 +100,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Global obyektga biriktirish
     window.db = db;
-    window.fStore = { collection, doc, setDoc, getDoc, getDocs, query, where };
+    window.fs = { collection, doc, setDoc, getDoc, getDocs, query, where };
   </script>
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="glass">
     <div class="brand">
       <div class="brand-logo">ATT</div>
@@ -122,14 +121,14 @@
     </div>
   </header>
 
-  <!-- AUTH SECTION (LOGIN) -->
+  <!-- LOGIN -->
   <div id="authSection" class="glass">
     <h2 style="margin-bottom: 0.5rem;">Tizimga Kirish</h2>
     <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Axborot Tizimlari va Texnologiyalari Yo'nalishi</p>
     
     <div class="form-group">
       <label>Login</label>
-      <input type="text" id="loginInput" placeholder="Masalan: student01 yoki domla1">
+      <input type="text" id="loginInput" placeholder="student01 yoki domla1">
     </div>
     <div class="form-group">
       <label>Parol</label>
@@ -138,9 +137,9 @@
     <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem;" onclick="login()">Tizimga Kirish</button>
   </div>
 
-  <!-- MAIN DASHBOARD -->
+  <!-- MAIN -->
   <main id="dashboardSection" style="display: none;">
-    <!-- DOMLALAR PANELI -->
+    <!-- TEACHER VIEW -->
     <div id="teacherView" style="display: none;">
       <div class="glass" style="padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
@@ -171,10 +170,9 @@
       </div>
     </div>
 
-    <!-- STUDENTLAR PANELI -->
+    <!-- STUDENT VIEW -->
     <div id="studentView" style="display: none;">
       <div class="grid">
-        <!-- SABAB YOZISH -->
         <div class="glass" style="padding: 1.5rem;">
           <h3>Darsga Kelolmaslik Sababi</h3>
           <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Sababingizni yozib saqlasangiz, barcha domlalarga ko'rinadi.</p>
@@ -185,12 +183,11 @@
           </div>
           <div class="form-group">
             <label>Izoh / Sabab</label>
-            <textarea id="excuseText" rows="4" placeholder="Masalan: Sog'lig'im yomonlashgani sababli darsga qatnasha olmayman..."></textarea>
+            <textarea id="excuseText" rows="4" placeholder="Masalan: Tobim qochib qoldi..."></textarea>
           </div>
-          <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="saveExcuse()">Sababni Saqlash</button>
+          <button class="btn btn-primary" id="saveExcuseBtn" style="width: 100%; justify-content: center;" onclick="saveExcuse()">Sababni Saqlash</button>
         </div>
 
-        <!-- KURSDOSHLAR RO'YXATI -->
         <div class="glass" style="padding: 1.5rem;">
           <h3>Kursdoshlar Davomati</h3>
           <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Ustiga bossangiz, o'quv yili boshidan beri bo'lgan tarixi chiqadi.</p>
@@ -211,47 +208,18 @@
     </div>
   </main>
 
-  <!-- MODAL: KURSDOSH TARIXI -->
-  <div id="historyModal" class="modal">
-    <div class="modal-content glass">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <div>
-          <h3 id="modalStudentName">Talaba Tarixi</h3>
-          <p style="color: var(--text-muted); font-size: 0.85rem;">2026/2027 O'quv Yili To'liq Davomat Tarixi</p>
-        </div>
-        <button class="btn btn-outline" onclick="closeModal()">✕</button>
-      </div>
-
-      <table style="width: 100%;">
-        <thead>
-          <tr>
-            <th>Sana</th>
-            <th>Fan</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="historyTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-
   <script>
-    // 5 TA DOMLA LOGIN / PAROLI
     const TEACHERS = [
       { id: 'tch_01', login: 'domla1', pass: 'domla_pass_1', name: 'Ahmadov B.', subject: 'Sun\'iy Intellekt', role: 'teacher' },
-      { id: 'tch_02', login: 'domla2', pass: 'domla_pass_2', name: 'Karimov S.', subject: 'Web Dasturlash', role: 'teacher' },
-      { id: 'tch_03', login: 'domla3', pass: 'domla_pass_3', name: 'Tashpulatov M.', subject: 'Ma\'lumotlar Bazasi', role: 'teacher' },
-      { id: 'tch_04', login: 'domla4', pass: 'domla_pass_4', name: 'Aliyeva N.', subject: 'Kiberxavfsizlik', role: 'teacher' },
-      { id: 'tch_05', login: 'domla5', pass: 'domla_pass_5', name: 'Nazarov Q.', subject: 'Algoritmlar', role: 'teacher' }
+      { id: 'tch_02', login: 'domla2', pass: 'domla_pass_2', name: 'Karimov S.', subject: 'Web Dasturlash', role: 'teacher' }
     ];
 
-    // STUDENTLAR RO'YXATI (Siz o'zingiz nusxalab ko'paytirishingiz mumkin)
     const STUDENTS = [
       { id: 'std_01', login: 'student01', pass: 'pass_std_01', name: 'Aliyev Vali', role: 'student' },
       { id: 'std_02', login: 'student02', pass: 'pass_std_02', name: 'Karimov Sardor', role: 'student' },
       { id: 'std_03', login: 'student03', pass: 'pass_std_03', name: 'Eshonqulova Malika', role: 'student' },
       { id: 'std_04', login: 'student04', pass: 'pass_std_04', name: 'Nazarov Diyor', role: 'student' },
-      { id: 'std_05', login: 'student05', pass: 'pass_std_05', name: 'Rustamov Bobur', role: 'student' },
+      { id: 'std_05', login: 'student05', pass: 'pass_std_05', name: 'Rustamov Bobur', role: 'student' }
     ];
 
     let currentUser = null;
@@ -289,27 +257,77 @@
       location.reload();
     }
 
+    // DOMLA UCHUN DAVOMAT
+    async function setAttendance(studentId, status) {
+      if(!window.db || !window.fs) return alert("Firebase moduli hali yuklanmadi, 2 soniya kuting!");
+      
+      const date = document.getElementById('attDate').value;
+      try {
+        const docId = `${date}_${studentId}_${currentUser.id}`;
+        await window.fs.setDoc(window.fs.doc(window.db, "attendance", docId), {
+          date: date,
+          studentId: studentId,
+          teacherId: currentUser.id,
+          subject: currentUser.subject,
+          status: status
+        });
+        alert(`Muvaffaqiyatli saqlandi: ${status}`);
+        loadStudentListForTeacher();
+      } catch (err) {
+        console.error(err);
+        alert("Xatolik yuz berdi: " + err.message);
+      }
+    }
+
+    // TALABA UCHUN SABABNI SAQLASH
+    async function saveExcuse() {
+      if(!window.db || !window.fs) return alert("Firebase moduli hali yuklanmadi, 2 soniya kuting!");
+
+      const date = document.getElementById('excuseDate').value;
+      const reason = document.getElementById('excuseText').value.trim();
+
+      if (!reason) return alert('Iltimos, sababni yozing!');
+
+      const btn = document.getElementById('saveExcuseBtn');
+      btn.innerText = "Saqlanmoqda...";
+      btn.disabled = true;
+
+      try {
+        const docId = `${date}_${currentUser.id}`;
+        await window.fs.setDoc(window.fs.doc(window.db, "excuses", docId), {
+          date: date,
+          studentId: currentUser.id,
+          studentName: currentUser.name,
+          reason: reason
+        });
+        alert('Sabab muvaffaqiyatli saqlandi!');
+        document.getElementById('excuseText').value = '';
+      } catch (err) {
+        console.error(err);
+        alert("Saqlashda xatolik bo'ldi: " + err.message);
+      } finally {
+        btn.innerText = "Sababni Saqlash";
+        btn.disabled = false;
+      }
+    }
+
     async function loadStudentListForTeacher() {
       const date = document.getElementById('attDate').value;
       const tbody = document.getElementById('teacherTableBody');
       tbody.innerHTML = '<tr><td colspan="5">Yuklanmoqda...</td></tr>';
 
       try {
-        const promises = STUDENTS.map(async (std, i) => {
+        const rows = await Promise.all(STUDENTS.map(async (std, i) => {
           let status = 'Belgilanmagan';
           let excuse = '-';
 
           try {
-            const docRef = window.fStore.doc(window.db, "attendance", `${date}_${std.id}_${currentUser.id}`);
-            const docSnap = await window.fStore.getDoc(docRef);
+            const docSnap = await window.fs.getDoc(window.fs.doc(window.db, "attendance", `${date}_${std.id}_${currentUser.id}`));
             if (docSnap.exists()) status = docSnap.data().status;
 
-            const excuseRef = window.fStore.doc(window.db, "excuses", `${date}_${std.id}`);
-            const excuseSnap = await window.fStore.getDoc(excuseRef);
+            const excuseSnap = await window.fs.getDoc(window.fs.doc(window.db, "excuses", `${date}_${std.id}`));
             if (excuseSnap.exists()) excuse = excuseSnap.data().reason;
-          } catch (e) {
-            console.warn("So'rov kelmadi:", e);
-          }
+          } catch (e) {}
 
           return `
             <tr>
@@ -324,98 +342,21 @@
               </td>
             </tr>
           `;
-        });
-
-        const rows = await Promise.all(promises);
+        }));
         tbody.innerHTML = rows.join('');
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--danger)">Yuklashda xatolik ro\'y berdi. Firebase Rules sozlamalarini tekshiring!</td></tr>';
-      }
-    }
-
-    async function setAttendance(studentId, status) {
-      const date = document.getElementById('attDate').value;
-      try {
-        await window.fStore.setDoc(window.fStore.doc(window.db, "attendance", `${date}_${studentId}_${currentUser.id}`), {
-          date: date,
-          studentId: studentId,
-          teacherId: currentUser.id,
-          subject: currentUser.subject,
-          status: status
-        });
-        loadStudentListForTeacher();
-      } catch(e) {
-        alert('Firebase yozish xatosi! Rules panelida "allow read, write: if true;" borligini tekshiring.');
-      }
-    }
-
-    async function saveExcuse() {
-      const date = document.getElementById('excuseDate').value;
-      const reason = document.getElementById('excuseText').value.trim();
-
-      if(!reason) return alert('Sababni yozing!');
-
-      try {
-        await window.fStore.setDoc(window.fStore.doc(window.db, "excuses", `${date}_${currentUser.id}`), {
-          date: date,
-          studentId: currentUser.id,
-          reason: reason
-        });
-        alert('Sabab saqlandi!');
-        document.getElementById('excuseText').value = '';
-      } catch(e) {
-        alert('Xatolik yuz berdi!');
+        tbody.innerHTML = '<tr><td colspan="5">Yuklashda xatolik bo\'ldi.</td></tr>';
       }
     }
 
     function loadStudentsListForStudent() {
       const tbody = document.getElementById('studentsListBody');
       tbody.innerHTML = STUDENTS.map(s => `
-        <tr onclick="showStudentHistory('${s.id}', '${s.name}')">
+        <tr>
           <td><b>${s.name}</b></td>
           <td><code style="color:var(--accent);">${s.login}</code></td>
         </tr>
       `).join('');
-    }
-
-    async function showStudentHistory(stdId, stdName) {
-      document.getElementById('modalStudentName').innerText = `${stdName}`;
-      document.getElementById('historyModal').style.display = 'flex';
-      
-      const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = '<tr><td colspan="3">Tarix yuklanmoqda...</td></tr>';
-
-      try {
-        const q = window.fStore.query(
-          window.fStore.collection(window.db, "attendance"),
-          window.fStore.where("studentId", "==", stdId)
-        );
-        const querySnapshot = await window.fStore.getDocs(q);
-        
-        if(querySnapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Ma\'lumot topilmadi.</td></tr>';
-          return;
-        }
-
-        let html = '';
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          html += `
-            <tr>
-              <td>${data.date}</td>
-              <td><b>${data.subject}</b></td>
-              <td><span class="badge badge-${data.status === 'Keldi' ? 'present' : data.status === 'Kelmadi' ? 'absent' : 'excused'}">${data.status}</span></td>
-            </tr>
-          `;
-        });
-        tbody.innerHTML = html;
-      } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="3">Xatolik yuz berdi.</td></tr>';
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('historyModal').style.display = 'none';
     }
   </script>
 </body>
